@@ -1,0 +1,82 @@
+<flow-definition plugin="workflow-job@2.12.2">
+    <description/>
+    <keepDependencies>false</keepDependencies>
+    <properties>
+        <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+            <triggers>
+                <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger plugin="gerrit-trigger@2.27.5">
+                    <spec/>
+                    <gerritProjects>
+                        <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject>
+                            <compareType>PLAIN</compareType>
+                            <pattern>OSS/com.ericsson.oss.de/ci-pipeline-jenkins-config</pattern>
+                            <branches>
+                                <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch>
+                                    <compareType>PLAIN</compareType>
+                                    <pattern>master</pattern>
+                                </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch>
+                            </branches>
+                            <disableStrictForbiddenFileVerification>false</disableStrictForbiddenFileVerification>
+                        </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject>
+                    </gerritProjects>
+                    <dynamicGerritProjects class="empty-list"/>
+                    <skipVote>
+                        <onSuccessful>false</onSuccessful>
+                        <onFailed>false</onFailed>
+                        <onUnstable>false</onUnstable>
+                        <onNotBuilt>false</onNotBuilt>
+                    </skipVote>
+                    <silentMode>true</silentMode>
+                    <notificationLevel/>
+                    <silentStartMode>false</silentStartMode>
+                    <escapeQuotes>true</escapeQuotes>
+                    <nameAndEmailParameterMode>PLAIN</nameAndEmailParameterMode>
+                    <dependencyJobsNames/>
+                    <commitMessageParameterMode>BASE64</commitMessageParameterMode>
+                    <changeSubjectParameterMode>PLAIN</changeSubjectParameterMode>
+                    <commentTextParameterMode>BASE64</commentTextParameterMode>
+                    <buildStartMessage/>
+                    <buildFailureMessage/>
+                    <buildSuccessfulMessage/>
+                    <buildUnstableMessage/>
+                    <buildNotBuiltMessage/>
+                    <buildUnsuccessfulFilepath/>
+                    <customUrl/>
+                    <serverName>gerrit central</serverName>
+                    <triggerOnEvents>
+                        <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginChangeMergedEvent/>
+                    </triggerOnEvents>
+                    <dynamicTriggerConfiguration>false</dynamicTriggerConfiguration>
+                    <triggerConfigURL/>
+                    <triggerInformationAction/>
+                </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger>
+            </triggers>
+        </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+    </properties>
+    <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps@2.45">
+        <scm class="hudson.plugins.git.GitSCM" plugin="git@3.8.0">
+            <configVersion>2</configVersion>
+            <userRemoteConfigs>
+                <hudson.plugins.git.UserRemoteConfig>
+                    <url>ssh://gerritmirror-ha.lmera.ericsson.se:29418/OSS/com.ericsson.oss.de/ci-pipeline-jenkins-config</url>
+                    <!-- The credentialsId may need to be set to something which matches the jenkins server -->
+                    <credentialsId>a13b45e7-e261-47fd-98cc-ec112890cdbf</credentialsId>
+                </hudson.plugins.git.UserRemoteConfig>
+            </userRemoteConfigs>
+            <branches>
+                <hudson.plugins.git.BranchSpec>
+                    <name>*/master</name>
+                </hudson.plugins.git.BranchSpec>
+            </branches>
+            <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+            <submoduleCfg class="list"/>
+            <extensions/>
+        </scm>
+        <scriptPath>
+            ci-jenkins-config/jenkinsFiles/ciPipelineJenkinsFiles/jenkinsConfigPipeline.groovy
+        </scriptPath>
+        <lightweight>false</lightweight>
+    </definition>
+    <triggers/>
+    <disabled>false</disabled>
+</flow-definition>

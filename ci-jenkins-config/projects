@@ -1,0 +1,3 @@
+OSS/com.ericsson.oss.ci/ci_lc_test1,fem144,SILENT_MODE=false,SKIP_SONAR=false,PCR=PM_SERVICE_test,GATE_TYPE=NA
+OSS/com.ericsson.oss.ci/ci_lc_test2,fem144,SILENT_MODE=false,SKIP_SONAR=false,PCR=PM_MEDIATION_BP_test,GATE_TYPE=NA
+OSS/com.ericsson.oss.ci/ci_lc_test3,fem144,SILENT_MODE=false,SKIP_SONAR=false,PCR=PM_SERVICE_test,GATE_TYPE=NA

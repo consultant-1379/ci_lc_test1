@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	
+<!--Please Use the latest version of integration pom.xml or the one you want to reference to -->
+	<parent>
+		<groupId>com.ericsson.nms</groupId>
+		<artifactId>integration</artifactId>
+		<version>15.2.0.40</version>
+	</parent>
+
+	<groupId>com.ericsson.oss.ci</groupId>
+	<artifactId>ci_lc_test</artifactId>
+	<version>1.0.10</version>
+	<packaging>pom</packaging>
+	<name>[${project.artifactId}] JEE6 Project</name>
+
+	<properties>
+	   <ericsson.scm.url>scm:git:[fetch=]ssh://gerritmirror.lmera.ericsson.se:29418/OSS/com.ericsson.oss.ci/ci_lc_test1[push=]ssh://gerrit.ericsson.se:29418/OSS/com.ericsson.oss.ci/ci_lc_test1</ericsson.scm.url>
+	</properties>
+
+	<!--Profiles for site documentation-->
+
+	 <!--Profile to deploy latest site-->
+	 <profiles>
+	  <profile>
+	     <id>site_latest</id>
+	        <distributionManagement>
+		       <site>
+		         <id>site</id>
+		         <name>Site</name>
+	                 <url>${site.url}/ci_lc_test/latest</url>
+		       </site>
+		</distributionManagement>
+	  </profile>
+
+	 <!--Profile to stage site for review-->
+	 
+	   <profile>
+	      <id>site_review</id>
+	         <distributionManagement>
+		        <site>
+			  <id>site</id>
+			  <name>Site</name>
+		          <url>${site.url}</url>
+			</site>	
+                 </distributionManagement>
+           </profile>
+	   </profiles>
+	   <!--Deployment of versioned documentation-->	
+		<distributionManagement>
+		   <site>		
+		     <id>site</id>
+		     <name>Site</name>								      <url>${site.url}/ci_lc_test/${project.version}</url>
+		   </site>
+		  </distributionManagement>
+
+            <modules>
+	       <module>ERICtest_CXP9999999</module>
+    <module>ci_lc_test-jar</module>
+  </modules>
+
+  <scm>
+      <developerConnection>${ericsson.scm.url}</developerConnection>
+      <connection>${ericsson.scm.url}</connection>
+      <tag>ci_lc_test-1.0.10</tag>
+  </scm>
+
+</project>

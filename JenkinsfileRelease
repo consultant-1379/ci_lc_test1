@@ -1,0 +1,125 @@
+@Library('ci-pipeline-lib') _
+pipeline {
+    agent {
+        label 'qfatonu_mesos_docker_v1.0.10_ansible_build_slave_fem142 '
+    }
+    options {
+        timeout(time: 60, unit: 'MINUTES')
+        timestamps()
+    }
+    stages {
+        stage('Pre-step') {
+            steps {
+                ci_pcr_pre()
+            }
+        }
+        stage('Clone') {
+            steps {
+                ci_pcr_clone()
+            }
+        }
+        stage('Init') {
+            steps {
+                ci_pcr_init()
+		process_pom()
+                get_content()
+            }
+        }
+        stage('BuildTar-Deploy') {
+            when {
+                environment name: 'BUILD_TAR', value: 'true'
+            }
+             steps {
+		create_tar()
+                push_to_nexus()
+            }
+        }
+        stage('init builder') {
+            when {
+                environment name: 'BUILD_DOCKER', value: 'true'
+            }
+            steps {
+                sh '''
+                /sbin/ifconfig
+                git submodule update --init --recursive
+                ./bob/bob init
+                '''
+            }
+        }
+        stage('Build docker image') {
+            when {
+                environment name: 'BUILD_DOCKER', value: 'true'
+            }
+            steps {
+                sh '''
+                ./bob/bob image publish
+                '''
+            }
+        }
+        stage('Release') {
+            when {
+                environment name: 'SKIP_RELEASE', value: 'false'
+            }
+            steps {
+                ci_full_release_build()
+                ci_merge_to_master()
+                register_artifact_in_portal()
+                register_image_in_portal()
+            }
+        }
+    }
+    post {
+        always {
+            ci_release_post()
+        }
+    }
+}
+def register_artifact_in_portal(){
+    //assumes env.BUILD_VERSION is set in release method
+    dropJson = sh(returnStdout: true, script: "wget -q -O - --no-check-certificate https://cifwk-oss.lmera.ericsson.se/api/product/EDP_Auto_Deploy/latestdrop")
+    def props = readJSON text: dropJson
+    env.DROP= props['drop']
+    sh(returnStdout: false, script: "wget -v -O- --no-check-certificate --post-data='releaseRepoName=releases&groupId=com.ericsson.oss.itpf.autodeploy&name=ERICautodeploy_CXP9038326&version=${BUILD_VERSION}&product=EDP_Auto_Deploy&release=ERICautodeploy-20A&drop=${DROP}&mediaType=tar.gz' https://cifwk-oss.lmera.ericsson.se/CIFWKMediaImport/")
+}
+
+def process_pom(){
+    pom = readMavenPom file: 'pom.xml'
+    env.BUILD_VERSION = pom.version.replace("-SNAPSHOT", "")
+}
+
+def get_content(){
+    //assumes env.BUILD_VERSION is set in release method
+    dropJson = sh(returnStdout: true, script: "wget -q -O - --no-check-certificate https://cifwk-oss.lmera.ericsson.se/api/product/EDP_Auto_Deploy/latestdrop")
+    def props = readJSON text: dropJson
+    env.DROP= props['drop']
+    
+    dropContentJson = sh(returnStdout: true, script: "wget -q -O - --no-check-certificate 'https://cifwk-oss.lmera.ericsson.se/getDropContents/?drop=${DROP}&product=EDP_Auto_Deploy&pretty=true'")
+    def dropContent = readJSON text: dropContentJson
+    echo dropContentJson
+    
+    build_arg_rpms=''
+    image_contents=''
+    for (int i = 0; i < dropContent.size(); i++) {
+        sh "wget ${dropContent[i]['url']}"
+        build_arg_rpms = build_arg_rpms + dropContent[i]['url'] +' '
+        image_contents = image_contents + '{"package":"'+dropContent[i]['name']+'","version":"'+dropContent[i]['version']+'"},'
+    }
+    env.EDP_RPMS='"'+build_arg_rpms.trim()+'"'
+}
+
+def create_tar(){
+    sh 'tar zcvf ${EDP_ARTIFACT}-${BUILD_VERSION}.tar.gz *.rpm'
+}
+
+def push_to_nexus(){
+    withMaven(jdk: env.JDK_HOME, maven: env.MVN_HOME) {
+       sh "mvn deploy:deploy-file -DgroupId=${GROUPID} -DartifactId=${EDP_ARTIFACT} -Dversion=${BUILD_VERSION} -DgeneratePom=false -Dpackaging=tar.gz -DrepositoryId=nexus -Durl=https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/releases -Dfile=${EDP_ARTIFACT}-${BUILD_VERSION}.tar.gz"
+    }
+}
+
+def register_image_in_portal(){
+    image_contents = image_contents.substring(0, image_contents.length() - 1)
+    env.post_data = '{"image_version":{"image":{"name":"edp-autodeploy"},"version":"'+env.BUILD_VERSION+'"},"package_revision":['+image_contents+']}'
+
+    sh 'curl -H "Content-Type: application/json" -X POST -d ${post_data} https://cifwk-oss.lmera.ericsson.se/api/fastcommit/images'
+}
